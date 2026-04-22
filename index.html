@@ -786,7 +786,7 @@ function startRest() {
   timeLeft = cfg.rest;
   audio.pause();
   updateUI();
-  if (cfg.rest === 0) { onRestEnd(); return; }
+  if (cfg.rest === 0) { startDance(true); return; }
   speak('Repos');
   tick();
 }
