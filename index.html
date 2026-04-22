@@ -948,7 +948,7 @@ function endSession() {
 
 // OVERLAY
 function showOverlay(type) {
-  audio.pause();
+  // Ne pas couper la musique — elle continue en fond
   const ovBtn = document.getElementById('ovBtn');
   if (type === 'round') {
     document.getElementById('ovEmoji').textContent = '💪';
@@ -961,13 +961,31 @@ function showOverlay(type) {
   document.getElementById('overlay').classList.add('show');
 }
 
+function fadeOutThen(duration, onDone) {
+  const startVol = audio.volume;
+  const steps = 40;
+  const interval = (duration * 1000) / steps;
+  let step = 0;
+  const fade = setInterval(() => {
+    step++;
+    audio.volume = Math.max(0, startVol * (1 - step / steps));
+    if (step >= steps) {
+      clearInterval(fade);
+      audio.pause();
+      audio.volume = 1; // reset pour la prochaine lecture
+      onDone();
+    }
+  }, interval);
+}
+
 function nextRound() {
   document.getElementById('overlay').classList.remove('show');
   currentRound++;
   currentDancer = 0;
   updateTopBar();
   buildDots();
-  startDance();
+  // Fondu 2 sec puis lance le round suivant avec stutter
+  fadeOutThen(2, () => startDance(true));
 }
 
 function finSession() {
