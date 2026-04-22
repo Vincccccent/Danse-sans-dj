@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DJ BATTLE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
+
+:root {
+  --bg: #0d0d0d;
+  --card: #161616;
+  --border: #2a2a2a;
+  --accent: #ff3c00;
+  --accent2: #ffcc00;
+  --green: #00e87a;
+  --text: #ffffff;
+  --sub: #888;
+  --r: 16px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.screen { display:none; min-height:100vh; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* ═══ SETUP ═══ */
+#setup { padding: 32px 20px 48px; gap: 12px; }
+
+.app-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 56px;
+  line-height: 1;
+  color: var(--text);
+  letter-spacing: 3px;
+}
+.app-title span { color: var(--accent); }
+.app-sub {
+  font-size: 11px;
+  color: var(--sub);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.param-row:last-child { border-bottom:none; padding-bottom:0; }
+.param-row:first-of-type { padding-top:0; }
+.param-label { font-size:17px; font-weight:700; }
+.param-hint { font-size:12px; color:var(--sub); margin-top:2px; }
+
+.stepper {
+  display: flex;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.stepper button {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  width: 48px;
+  height: 52px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+.stepper button:active { background: #222; }
+.stepper-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  min-width: 52px;
+  text-align: center;
+  color: var(--accent2);
+}
+.stepper-unit { font-size:12px; color:var(--sub); padding-right:6px; }
+
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--r);
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: border-color .2s;
+}
+.upload-zone.has-files { border-color:var(--green); border-style:solid; }
+.upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-icon { font-size:44px; margin-bottom:10px; }
+.upload-label { font-size:16px; font-weight:700; }
+.upload-sub { font-size:13px; color:var(--sub); margin-top:4px; }
+.upload-count { display:none; margin-top:12px; font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--green); letter-spacing:2px; }
+
+#trackList { margin-top:10px; display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; }
+.track-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.track-item-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.track-num { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--sub); min-width:22px; }
+.track-name { flex:1; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.track-status { font-size:11px; font-weight:700; letter-spacing:1px; color:var(--sub); flex-shrink:0; }
+.track-status.loading { color:var(--accent2); }
+.track-status.ready { color:var(--green); }
+.track-bpm { font-size:11px; color:var(--sub); letter-spacing:1px; }
+.waveform-wrap { position:relative; width:100%; height:40px; border-radius:6px; overflow:hidden; background:#0d0d0d; }
+.waveform-wrap canvas { width:100%; height:100%; display:block; }
+
+.btn-start {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 4px;
+  padding: 22px;
+  border-radius: var(--r);
+  cursor: pointer;
+  width: 100%;
+  margin-top: 4px;
+  transition: transform .1s, opacity .2s;
+}
+.btn-start:active { transform:scale(.97); }
+.btn-start:disabled { opacity:.3; cursor:not-allowed; }
+
+/* Toggle */
+.toggle-row {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.toggle-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--sub);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 16px 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background .2s, color .2s;
+  line-height: 1.4;
+}
+.toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ═══ SESSION ═══ */
+#session { justify-content:space-between; }
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  padding: 18px 20px;
+}
+.topbar-item { text-align:center; }
+.topbar-item:first-child { text-align:left; }
+.topbar-item:last-child { text-align:right; }
+.topbar-label { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--sub); }
+.topbar-val { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:1px; margin-top:2px; }
+
+.main-zone {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding: 20px;
+  gap: 6px;
+}
+
+.phase-badge {
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  padding: 8px 22px;
+  border-radius: 100px;
+  margin-bottom: 4px;
+}
+.phase-badge.dance { background:#ff3c0020; color:var(--accent); border:1.5px solid var(--accent); }
+.phase-badge.rest { background:#00e87a18; color:var(--green); border:1.5px solid var(--green); }
+
+.ring-wrap { position:relative; width:230px; height:230px; }
+.ring-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring-bg { fill:none; stroke:var(--border); stroke-width:10; }
+.ring-fg { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .6s linear, stroke .3s; }
+.ring-fg.rest { stroke:var(--green); }
+
+.timer-center { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+.timer-num {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:100px;
+  line-height:1;
+  letter-spacing:-2px;
+  transition: color .3s;
+}
+.timer-num.warn { color:var(--accent); }
+.timer-num.rest-c { color:var(--green); }
+
+.dancer-section { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:10px; }
+.dancer-current { font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:2px; color:var(--accent2); }
+
+.dancer-dots { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+.dot { width:18px; height:18px; border-radius:50%; background:var(--border); transition:all .25s; }
+.dot.active { background:var(--accent2); transform:scale(1.3); box-shadow:0 0 12px var(--accent2); }
+.dot.done { background:#2a2a2a; }
+
+.now-playing {
+  width:100%;
+  background:var(--card);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding: 16px 20px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.disc { font-size:28px; animation:spin 4s linear infinite; flex-shrink:0; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.np-name { font-size:15px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.np-sub { font-size:11px; color:var(--sub); margin-top:3px; letter-spacing:1px; }
+
+.controls { display:grid; grid-template-columns:1fr 1fr 1fr; }
+.ctrl {
+  background:none;
+  border:none;
+  border-right:1px solid var(--border);
+  color:var(--sub);
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:22px 8px;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  transition:color .15s, background .15s;
+}
+.ctrl:last-child { border-right:none; }
+.ctrl:active { background:#1a1a1a; color:var(--text); }
+.ctrl-icon { font-size:22px; }
+.ctrl.danger:active { color:var(--accent); }
+
+.overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.88);
+  backdrop-filter:blur(10px);
+  z-index:200;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  padding:32px;
+}
+.overlay.show { display:flex; }
+.ov-emoji { font-size:72px; animation:pop .4s ease; }
+.ov-title { font-family:'Bebas Neue',sans-serif; font-size:54px; letter-spacing:3px; color:var(--accent2); text-align:center; animation:pop .4s ease; }
+.ov-sub { font-size:15px; color:var(--sub); text-align:center; }
+.ov-btn { background:var(--accent); border:none; color:#fff; font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:3px; padding:18px 52px; border-radius:var(--r); cursor:pointer; margin-top:8px; }
+
+@keyframes pop { 0%{transform:scale(.6);opacity:0;} 80%{transform:scale(1.05);} 100%{transform:scale(1);opacity:1;} }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.pulse { animation:pulse .5s infinite; }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup" class="screen active">
+  <div class="app-title">DJ<span>B</span>ATTLE</div>
+  <div class="app-sub">Session d'entraînement automatique</div>
+
+  <div class="card">
+    <div class="card-title">Paramètres</div>
+
+    <div class="param-row">
+      <div>
+        <div class="param-label">Danseurs</div>
+        <div class="param-hint">Nombre de participants</div>
+      </div>
+      <div class="stepper">
+        <button onclick="step('dancers',-1)">−</button>
+        <span class="stepper-val" id="val-dancers">3</span>
+        <button onclick="step('dancers',1)">+</button>
+      </div>
+    </div>
+
+    <div class="param-row">
+      <div>
+        <div class="param-label">Temps de danse</div>
+        <div class="param-hint">Durée par danseur</div>
+      </div>
+      <div class="stepper">
+        <button onclick="step('effort',-5)">−</button>
+        <span class="stepper-val" id="val-effort">45</span>
+        <span class="stepper-unit">sec</span>
+        <button onclick="step('effort',5)">+</button>
+      </div>
+    </div>
+
+    <div class="param-row">
+      <div>
+        <div class="param-label">Récupération</div>
+        <div class="param-hint">Temps entre chaque danseur</div>
+      </div>
+      <div class="stepper">
+        <button onclick="step('rest',-5)">−</button>
+        <span class="stepper-val" id="val-rest">15</span>
+        <span class="stepper-unit">sec</span>
+        <button onclick="step('rest',5)">+</button>
+      </div>
+    </div>
+
+    <div class="param-row" id="rowRounds">
+      <div>
+        <div class="param-label">Rounds</div>
+        <div class="param-hint">Nombre de passages</div>
+      </div>
+      <div class="stepper">
+        <button onclick="step('rounds',-1)">−</button>
+        <span class="stepper-val" id="val-rounds">3</span>
+        <button onclick="step('rounds',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="audio/*" multiple>
+    <div class="upload-icon">🎵</div>
+    <div class="upload-label">Importer les musiques</div>
+    <div class="upload-sub">MP3, WAV — autant que tu veux</div>
+    <div class="upload-count" id="uploadCount"></div>
+  </div>
+  <div id="trackList"></div>
+
+  <div class="card-title" style="margin-top:4px;">Mode musique</div>
+  <div class="toggle-row">
+    <button class="toggle-btn active" id="modeRound" onclick="setMode('round')">🎵 1 son par round<br><span style="font-weight:400;font-size:11px;opacity:.7">Même son pour tous</span></button>
+    <button class="toggle-btn" id="modeDancer" onclick="setMode('dancer')">🎶 1 son par danseur<br><span style="font-weight:400;font-size:11px;opacity:.7">Chacun son son</span></button>
+  </div>
+
+  <button class="btn-start" id="btnStart" onclick="startSession()" disabled>LANCER LA SESSION</button>
+</div>
+
+<!-- SESSION -->
+<div id="session" class="screen">
+  <div class="topbar">
+    <div class="topbar-item">
+      <div class="topbar-label">Round</div>
+      <div class="topbar-val" id="roundDisplay">1 / 3</div>
+    </div>
+    <div class="topbar-item">
+      <div class="topbar-label">Morceau</div>
+      <div class="topbar-val" id="trackDisplay">1 / 5</div>
+    </div>
+    <div class="topbar-item">
+      <div class="topbar-label">Danseurs</div>
+      <div class="topbar-val" id="dancerCountDisplay">3</div>
+    </div>
+  </div>
+
+  <div class="main-zone">
+    <div class="phase-badge dance" id="phaseBadge">DANSE !</div>
+
+    <div class="ring-wrap">
+      <svg viewBox="0 0 100 100">
+        <circle class="ring-bg" cx="50" cy="50" r="43"/>
+        <circle class="ring-fg" id="ringFg" cx="50" cy="50" r="43"
+          stroke-dasharray="270.18" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-num" id="timerNum">45</div>
+      </div>
+    </div>
+
+    <div class="dancer-section">
+      <div class="dancer-current" id="dancerCurrent">DANSEUR 1</div>
+      <div class="dancer-dots" id="dancerDots"></div>
+    </div>
+  </div>
+
+  <div class="now-playing">
+    <div class="disc">💿</div>
+    <div style="flex:1;overflow:hidden;">
+      <div class="np-name" id="npName">—</div>
+      <div class="np-sub" id="npSub">En attente...</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl" id="btnPause" onclick="togglePause()">
+      <span class="ctrl-icon">⏸</span>
+      <span>Pause</span>
+    </button>
+    <button class="ctrl" onclick="skipTrack()">
+      <span class="ctrl-icon">⏭</span>
+      <span>Skip</span>
+    </button>
+    <button class="ctrl danger" onclick="endSession()">
+      <span class="ctrl-icon">✕</span>
+      <span>Fin</span>
+    </button>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="ov-emoji" id="ovEmoji">💪</div>
+  <div class="ov-title" id="ovTitle">ROUND 1 TERMINÉ</div>
+  <div class="ov-sub" id="ovSub">Préparez-vous pour le round suivant</div>
+  <button class="ov-btn" id="ovBtn">ROUND SUIVANT →</button>
+</div>
+
+<audio id="audioPlayer" preload="auto"></audio>
+
+<script>
+const cfg = { dancers:3, effort:45, rest:15, rounds:3 };
+const MIN = { dancers:1, effort:10, rest:0, rounds:1 };
+const MAX = { dancers:12, effort:300, rest:120, rounds:10 };
+
+let tracks = [];
+let trackIndex = 0;
+let currentDancer = 0;
+let currentRound = 1;
+let isRest = false;
+let timeLeft = 0;
+let timerInterval = null;
+let isPaused = false;
+let audioCtx = null;
+let musicMode = 'round'; // 'round' ou 'dancer'
+
+const audio = document.getElementById('audioPlayer');
+const CIRC = 2 * Math.PI * 43;
+
+// SETUP
+function step(key, delta) {
+  cfg[key] = Math.min(MAX[key], Math.max(MIN[key], cfg[key] + delta));
+  document.getElementById('val-' + key).textContent = cfg[key];
+}
+
+function setMode(mode) {
+  musicMode = mode;
+  document.getElementById('modeRound').classList.toggle('active', mode === 'round');
+  document.getElementById('modeDancer').classList.toggle('active', mode === 'dancer');
+  // Cacher le réglage Rounds en mode danseur — inutile, c'est le nb de morceaux qui commande
+  document.getElementById('rowRounds').style.display = mode === 'dancer' ? 'none' : 'flex';
+}
+
+document.getElementById('fileInput').addEventListener('change', handleFiles);
+
+function handleFiles(e) {
+  const files = [...e.target.files];
+  if (!files.length) return;
+  tracks = [];
+  document.getElementById('trackList').innerHTML = '';
+  document.getElementById('uploadZone').classList.add('has-files');
+  const countEl = document.getElementById('uploadCount');
+  countEl.style.display = 'block';
+  countEl.textContent = files.length + ' son' + (files.length > 1 ? 's' : '') + ' chargé' + (files.length > 1 ? 's' : '');
+
+  files.forEach((file, i) => {
+    const url = URL.createObjectURL(file);
+    const track = { name: file.name.replace(/\.[^.]+$/, ''), url, startTime:0, endTime:null, bpm:null, beats:[] };
+    tracks.push(track);
+    const el = document.createElement('div');
+    el.className = 'track-item';
+    el.id = 'track-' + i;
+    el.innerHTML = `
+      <div class="track-item-top">
+        <span class="track-num">${i+1}</span>
+        <span class="track-name">${track.name}</span>
+        <span class="track-status loading" id="ts-${i}">ANALYSE…</span>
+      </div>
+      <div class="waveform-wrap"><canvas id="wv-${i}" height="80"></canvas></div>
+      <div class="track-bpm" id="bpm-${i}"></div>`;
+    document.getElementById('trackList').appendChild(el);
+    analyzeTrack(track, i);
+  });
+  checkReady();
+}
+
+async function analyzeTrack(track, i) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const buf = await (await fetch(track.url)).arrayBuffer();
+    const decoded = await audioCtx.decodeAudioData(buf);
+    const sr = decoded.sampleRate;
+    const duration = decoded.duration;
+
+    // ── 1. Analyse par bandes de fréquences (offline) ──
+    // On sépare basses (kick), mids (caisse claire), highs (hihat)
+    const offlineCtx = new OfflineAudioContext(1, decoded.length, sr);
+    const src = offlineCtx.createBufferSource();
+    src.buffer = decoded;
+
+    // Filtre passe-bas pour les basses (kick) : < 200 Hz
+    const lpf = offlineCtx.createBiquadFilter();
+    lpf.type = 'lowpass'; lpf.frequency.value = 200;
+
+    // Filtre passe-bande pour les mids (caisse claire) : 200–2000 Hz
+    const bpf = offlineCtx.createBiquadFilter();
+    bpf.type = 'bandpass'; bpf.frequency.value = 800; bpf.Q.value = 1.5;
+
+    src.connect(lpf);
+    src.connect(bpf);
+    lpf.connect(offlineCtx.destination);
+    src.start(0);
+    const rendered = await offlineCtx.startRendering();
+    const bassData = rendered.getChannelData(0);
+
+    const winSec = 0.05; // fenêtre 50ms
+    const win = Math.floor(sr * winSec);
+
+    // RMS bandes basses (= energie kick)
+    const bassRms = [];
+    for (let s = 0; s < bassData.length - win; s += win) {
+      let sum = 0;
+      for (let j = 0; j < win; j++) sum += bassData[s+j]**2;
+      bassRms.push(Math.sqrt(sum / win));
+    }
+
+    // RMS waveform globale pour affichage
+    const rawData = decoded.getChannelData(0);
+    const displayWin = Math.floor(rawData.length / 300);
+    const waveRms = [];
+    for (let s = 0; s < rawData.length - displayWin; s += displayWin) {
+      let sum = 0;
+      for (let j = 0; j < displayWin; j++) sum += rawData[s+j]**2;
+      waveRms.push(Math.sqrt(sum / displayWin));
+    }
+
+    // ── 2. Fade-in / fade-out sur RMS globale ──
+    const globalWin = Math.floor(sr * 0.1);
+    const globalRms = [];
+    for (let s = 0; s < rawData.length - globalWin; s += globalWin) {
+      let sum = 0;
+      for (let j = 0; j < globalWin; j++) sum += rawData[s+j]**2;
+      globalRms.push(Math.sqrt(sum / globalWin));
+    }
+    const maxGlobal = Math.max(...globalRms);
+    const thresh = maxGlobal * 0.12;
+
+    let si = 0;
+    for (let r = 0; r < globalRms.length - 5; r++) {
+      if (globalRms[r] > thresh && globalRms[r+1] > thresh && globalRms[r+2] > thresh) { si = r; break; }
+    }
+    let ei = globalRms.length - 1;
+    for (let r = globalRms.length-1; r > 5; r--) {
+      if (globalRms[r] > thresh && globalRms[r-1] > thresh && globalRms[r-2] > thresh) { ei = r; break; }
+    }
+    const rawStart = Math.max(0, si * 0.1 - 0.05);
+    track.endTime = Math.min(duration, ei * 0.1 + 0.3);
+
+    // ── 3. Détection BPM par autocorrélation sur les basses ──
+    // Onset = delta positif de l'énergie basse
+    const bassOnset = bassRms.map((v,idx) => idx===0 ? 0 : Math.max(0, v - bassRms[idx-1]));
+
+    // Cherche la période entre 60–180 BPM
+    // À 50ms/fenêtre : 60bpm = période 20 frames, 180bpm = période ~7 frames
+    let bestCorr = -1, bestPeriod = 10;
+    for (let p = 7; p <= 20; p++) {
+      let c = 0;
+      const limit = bassOnset.length - p * 8;
+      for (let t = 0; t < limit; t++) c += bassOnset[t] * bassOnset[t+p];
+      if (c > bestCorr) { bestCorr = c; bestPeriod = p; }
+    }
+    const beatDur = bestPeriod * winSec;
+    track.bpm = Math.round(60 / beatDur);
+    track.beatDuration = beatDur;
+
+    // ── 4. Extraction des beats réels (pics d'onset dans la grille BPM) ──
+    const rawStartFrame = Math.floor(rawStart / winSec);
+    const maxOnset = Math.max(...bassOnset);
+    const onsetThresh = maxOnset * 0.3;
+    const beats = [];
+    let lastBeat = -bestPeriod;
+    for (let r = rawStartFrame; r < bassOnset.length; r++) {
+      const isLocalPeak = bassOnset[r] > (bassOnset[r-1]||0) && bassOnset[r] > (bassOnset[r+1]||0);
+      if (isLocalPeak && bassOnset[r] > onsetThresh && r - lastBeat >= bestPeriod * 0.7) {
+        beats.push(r * winSec);
+        lastBeat = r;
+      }
+    }
+    track.beats = beats;
+
+    // ── 5. Snap sur le "1" : premier beat fort après rawStart ──
+    const beatsAfterStart = beats.filter(b => b >= rawStart);
+    if (beatsAfterStart.length > 0) {
+      // Cherche le beat le plus fort parmi les 8 premiers
+      let best1 = beatsAfterStart[0];
+      let bestFrameStr = -1;
+      for (let b = 0; b < Math.min(8, beatsAfterStart.length); b++) {
+        const fr = Math.round(beatsAfterStart[b] / winSec);
+        if (bassOnset[fr] > bestFrameStr) { bestFrameStr = bassOnset[fr]; best1 = beatsAfterStart[b]; }
+      }
+      track.startTime = Math.max(0, best1);
+    } else {
+      track.startTime = rawStart;
+    }
+
+    // ── 6. Dessin waveform + beats + marqueur de départ ──
+    drawWaveform(i, waveRms, beats, track.startTime, track.endTime, duration);
+
+    document.getElementById('ts-' + i).textContent = '✓ ' + track.bpm + ' BPM';
+    document.getElementById('ts-' + i).className = 'track-status ready';
+    document.getElementById('bpm-' + i).textContent =
+      '♩ ' + track.bpm + ' BPM · départ: ' + track.startTime.toFixed(2) + 's · fin: ' + track.endTime.toFixed(1) + 's · ' + beats.length + ' beats détectés';
+
+  } catch(err) {
+    track.startTime = 0; track.endTime = null; track.beats = [];
+    document.getElementById('ts-' + i).textContent = '✓ OK';
+    document.getElementById('ts-' + i).className = 'track-status ready';
+  }
+  checkReady();
+}
+
+function drawWaveform(i, waveRms, beats, startTime, endTime, duration) {
+  const canvas = document.getElementById('wv-' + i);
+  if (!canvas) return;
+  const W = canvas.offsetWidth || 300;
+  canvas.width = W * 2; // retina
+  canvas.height = 80;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const maxRms = Math.max(...waveRms, 0.001);
+
+  // Fond
+  ctx.fillStyle = '#0d0d0d';
+  ctx.fillRect(0, 0, w, h);
+
+  // Zone active (entre startTime et endTime)
+  const sx = (startTime / duration) * w;
+  const ex = (endTime / duration) * w;
+  ctx.fillStyle = '#ffffff08';
+  ctx.fillRect(sx, 0, ex - sx, h);
+
+  // Waveform
+  const barW = w / waveRms.length;
+  waveRms.forEach((v, idx) => {
+    const x = idx * barW;
+    const barH = (v / maxRms) * (h * 0.85);
+    const progress = (idx * barW) / w;
+    const timeAtBar = progress * duration;
+    let color;
+    if (timeAtBar < startTime || (endTime && timeAtBar > endTime)) {
+      color = '#333'; // zone fade
+    } else {
+      color = '#ffffff55';
+    }
+    ctx.fillStyle = color;
+    ctx.fillRect(x, h/2 - barH/2, Math.max(1, barW - 0.5), barH);
+  });
+
+  // Beats (traits oranges)
+  ctx.strokeStyle = '#ff3c0099';
+  ctx.lineWidth = 1;
+  beats.forEach(b => {
+    const x = (b / duration) * w;
+    ctx.beginPath();
+    ctx.moveTo(x, h * 0.2);
+    ctx.lineTo(x, h * 0.8);
+    ctx.stroke();
+  });
+
+  // Marqueur départ (ligne verte épaisse = "le 1")
+  const startX = (startTime / duration) * w;
+  ctx.strokeStyle = '#00e87a';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(startX, 0);
+  ctx.lineTo(startX, h);
+  ctx.stroke();
+
+  // Label "1"
+  ctx.fillStyle = '#00e87a';
+  ctx.font = 'bold 18px Inter, sans-serif';
+  ctx.fillText('1', startX + 4, 16);
+}
+
+function checkReady() {
+  document.getElementById('btnStart').disabled = tracks.length === 0 || !tracks.every(t => t.startTime !== undefined);
+}
+
+// SESSION
+function startSession() {
+  if (!tracks.length) return;
+  tracks.sort(() => Math.random() - 0.5);
+  trackIndex = 0; currentDancer = 0; currentRound = 1;
+  isRest = false; isPaused = false;
+  showScreen('session');
+  buildDots();
+  updateTopBar();
+  startDance();
+}
+
+function buildDots() {
+  const el = document.getElementById('dancerDots');
+  el.innerHTML = '';
+  for (let i = 0; i < cfg.dancers; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0 ? ' active' : '');
+    d.id = 'dot-' + i;
+    el.appendChild(d);
+  }
+}
+
+function updateTopBar() {
+  document.getElementById('roundDisplay').textContent = currentRound + ' / ' + cfg.rounds;
+  document.getElementById('trackDisplay').textContent = (trackIndex+1) + ' / ' + tracks.length;
+  document.getElementById('dancerCountDisplay').textContent = cfg.dancers;
+}
+
+function startDance(withStutter = false) {
+  isRest = false;
+  timeLeft = cfg.effort;
+  updateUI();
+  tick();
+  if (withStutter) {
+    stutterThenPlay(() => playTrack());
+  } else {
+    playTrack();
+  }
+}
+
+function startRest() {
+  isRest = true;
+  timeLeft = cfg.rest;
+  audio.pause();
+  updateUI();
+  if (cfg.rest === 0) { onRestEnd(); return; }
+  speak('Repos');
+  tick();
+}
+
+function updateUI() {
+  const badge = document.getElementById('phaseBadge');
+  const ring = document.getElementById('ringFg');
+  const num = document.getElementById('timerNum');
+  if (isRest) {
+    badge.textContent = 'RÉCUPÉRATION';
+    badge.className = 'phase-badge rest';
+    ring.className = 'ring-fg rest';
+    num.className = 'timer-num rest-c';
+    document.getElementById('dancerCurrent').textContent = 'RÉCUP';
+  } else {
+    badge.textContent = 'DANSE !';
+    badge.className = 'phase-badge dance';
+    ring.className = 'ring-fg';
+    num.className = 'timer-num';
+    document.getElementById('dancerCurrent').textContent = 'DANSEUR ' + (currentDancer+1);
+  }
+  for (let i = 0; i < cfg.dancers; i++) {
+    const dot = document.getElementById('dot-' + i);
+    if (!dot) continue;
+    dot.className = 'dot' + (i < currentDancer ? ' done' : i === currentDancer && !isRest ? ' active' : '');
+  }
+}
+
+function tick() {
+  if (timerInterval) clearInterval(timerInterval);
+  renderTimer();
+  timerInterval = setInterval(() => {
+    if (isPaused) return;
+    timeLeft--;
+    renderTimer();
+    if (timeLeft <= 5 && timeLeft > 0 && !isRest) speak(String(timeLeft));
+    if (timeLeft <= 0) { clearInterval(timerInterval); isRest ? onRestEnd() : onDanceEnd(); }
+  }, 1000);
+}
+
+function renderTimer() {
+  const total = isRest ? cfg.rest : cfg.effort;
+  const pct = total > 0 ? timeLeft / total : 0;
+  document.getElementById('ringFg').style.strokeDashoffset = CIRC * (1 - pct);
+  const num = document.getElementById('timerNum');
+  num.textContent = timeLeft;
+  if (!isRest && timeLeft <= 5) num.classList.add('warn','pulse');
+  else num.classList.remove('warn','pulse');
+}
+
+function onDanceEnd() {
+  currentDancer++;
+
+  if (musicMode === 'dancer') {
+    trackIndex = (trackIndex + 1) % tracks.length;
+    if (currentDancer >= cfg.dancers) {
+      currentDancer = 0;
+      currentRound++;
+      updateTopBar();
+      buildDots();
+      // Fin quand on a rebouclé sur tous les morceaux
+      if (trackIndex === 0) { finSession(); return; }
+    }
+    updateTopBar();
+    updateUI();
+    if (cfg.rest > 0) startRest(); else startDance(true);
+    return;
+  }
+
+  // Mode round classique
+  if (currentDancer >= cfg.dancers) {
+    currentDancer = 0;
+    trackIndex = (trackIndex + 1) % tracks.length;
+    if (currentRound >= cfg.rounds) { finSession(); return; }
+    showOverlay('round');
+    return;
+  }
+  updateTopBar();
+  updateUI();
+  if (cfg.rest > 0) startRest(); else startDance(true);
+}
+
+function onRestEnd() { startDance(false); }
+
+// ══ STUTTER TRANSITION ══
+// Joue le début du son en stutter (répète 4 fois en accélérant) avant de lancer la danse
+function stutterThenPlay(onDone) {
+  const t = tracks[trackIndex];
+  if (!t || !audioCtx) { onDone(); return; }
+
+  audio.pause();
+
+  // 4 répétitions avec intervalles décroissants : 280ms, 220ms, 160ms, 100ms
+  const intervals = [260, 260];
+  const chunkDur = 0.12; // 120ms de son à chaque stutter
+  let step = 0;
+
+  function playChunk() {
+    if (step >= intervals.length) {
+      onDone();
+      return;
+    }
+    // Remet le son au début du "1" et joue un chunk court
+    if (audio.src !== t.url) { audio.src = t.url; }
+    audio.currentTime = t.startTime;
+    audio.play().catch(() => {});
+
+    // Coupe après chunkDur
+    setTimeout(() => {
+      audio.pause();
+      step++;
+      setTimeout(playChunk, intervals[step - 1] - chunkDur * 1000);
+    }, chunkDur * 1000);
+  }
+
+  playChunk();
+}
+
+// ══ AUDIO ══
+function playTrack() {
+  const t = tracks[trackIndex];
+  if (!t) return;
+  document.getElementById('npName').textContent = t.name;
+  document.getElementById('npSub').textContent = t.bpm ? '♩ ' + t.bpm + ' BPM · départ sur le "1"' : 'En lecture…';
+  updateTopBar();
+  if (audio.src !== t.url) audio.src = t.url;
+  audio.currentTime = t.startTime;
+  audio.play().catch(() => {});
+  audio.ontimeupdate = () => {
+    if (t.endTime && audio.currentTime >= t.endTime - 0.2) audio.currentTime = t.startTime;
+  };
+}
+
+function skipTrack() {
+  trackIndex = (trackIndex+1) % tracks.length;
+  updateTopBar();
+  playTrack();
+  // Repart le chrono à zéro sur le temps en cours (danse ou récup)
+  timeLeft = isRest ? cfg.rest : cfg.effort;
+  renderTimer();
+}
+
+// CONTROLS
+function togglePause() {
+  isPaused = !isPaused;
+  const btn = document.getElementById('btnPause');
+  btn.querySelector('.ctrl-icon').textContent = isPaused ? '▶' : '⏸';
+  btn.querySelector('span:last-child').textContent = isPaused ? 'Play' : 'Pause';
+  if (isPaused) audio.pause(); else audio.play().catch(() => {});
+}
+
+function endSession() {
+  if (confirm('Terminer la session ?')) {
+    clearInterval(timerInterval);
+    audio.pause();
+    showScreen('setup');
+  }
+}
+
+// OVERLAY
+function showOverlay(type) {
+  audio.pause();
+  const ovBtn = document.getElementById('ovBtn');
+  if (type === 'round') {
+    document.getElementById('ovEmoji').textContent = '💪';
+    document.getElementById('ovTitle').textContent = 'ROUND ' + currentRound + ' TERMINÉ';
+    document.getElementById('ovSub').textContent = 'Préparez-vous pour le round ' + (currentRound+1);
+    ovBtn.textContent = 'ROUND SUIVANT →';
+    ovBtn.onclick = nextRound;
+    speak('Round ' + currentRound + ' terminé. Préparez-vous.');
+  }
+  document.getElementById('overlay').classList.add('show');
+}
+
+function nextRound() {
+  document.getElementById('overlay').classList.remove('show');
+  currentRound++;
+  currentDancer = 0;
+  updateTopBar();
+  buildDots();
+  startDance();
+}
+
+function finSession() {
+  clearInterval(timerInterval);
+  audio.pause();
+  document.getElementById('ovEmoji').textContent = '🔥';
+  document.getElementById('ovTitle').textContent = 'SESSION TERMINÉE';
+  document.getElementById('ovSub').textContent = cfg.rounds + ' rounds · Tout le monde a dansé !';
+  const ovBtn = document.getElementById('ovBtn');
+  ovBtn.textContent = 'RETOUR';
+  ovBtn.onclick = () => { document.getElementById('overlay').classList.remove('show'); showScreen('setup'); };
+  document.getElementById('overlay').classList.add('show');
+  speak('Session terminée. Bien joué !');
+}
+
+// SPEECH
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fr-FR'; u.rate = 1.1;
+  window.speechSynthesis.speak(u);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>
