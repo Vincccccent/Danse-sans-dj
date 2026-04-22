@@ -962,20 +962,23 @@ function showOverlay(type) {
 }
 
 function fadeOutThen(duration, onDone) {
-  const startVol = audio.volume;
-  const steps = 40;
-  const interval = (duration * 1000) / steps;
-  let step = 0;
-  const fade = setInterval(() => {
-    step++;
-    audio.volume = Math.max(0, startVol * (1 - step / steps));
-    if (step >= steps) {
-      clearInterval(fade);
+  const startVol = 1;
+  const startTime = performance.now();
+  const totalMs = duration * 1000;
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / totalMs, 1);
+    audio.volume = startVol * (1 - progress);
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    } else {
       audio.pause();
-      audio.volume = 1; // reset pour la prochaine lecture
+      audio.volume = 1;
       onDone();
     }
-  }, interval);
+  }
+  requestAnimationFrame(frame);
 }
 
 function nextRound() {
@@ -1001,13 +1004,47 @@ function finSession() {
   speak('Session terminée. Bien joué !');
 }
 
-// SPEECH
+// SPEECH — bips AudioContext fiables sur mobile
 function speak(text) {
+  // Pour les chiffres du décompte → bip sonore
+  const num = parseInt(text);
+  if (!isNaN(num) && num >= 1 && num <= 5) {
+    playBeep(num);
+    return;
+  }
+  // Pour les messages texte → Web Speech API en fallback
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'fr-FR'; u.rate = 1.1;
   window.speechSynthesis.speak(u);
+}
+
+function playBeep(num) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    // "1" = bip grave long, 2-5 = bips aigus courts
+    if (num === 1) {
+      osc.frequency.value = 880; // aigu
+      gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.6);
+    } else {
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.15);
+    }
+  } catch(e) {}
 }
 
 function showScreen(id) {
